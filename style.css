@@ -62,8 +62,20 @@ body {
     transform: scale(1.04);
 }
 
-video.media {
-    cursor: pointer;
+.play-button {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    /* Let clicks pass through to the tile listener */
+    z-index: 10;
+    transition: transform 180ms ease;
+}
+
+.tile:hover .play-button {
+    transform: scale(1.1);
 }
 
 iframe.media {

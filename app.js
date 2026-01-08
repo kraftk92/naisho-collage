@@ -45,12 +45,6 @@ function driveToPreview(url) {
     return url;
 }
 
-function driveToStream(url) {
-    const id = getDriveId(url);
-    if (id) return `https://drive.google.com/uc?export=download&id=${id}`;
-    return url;
-}
-
 function postHeight() {
     const height = document.documentElement.scrollHeight;
     window.parent?.postMessage({ type: "naisho-collage-height", height }, "*");
@@ -85,8 +79,6 @@ function createTile({ mediaUrl, alt, link }) {
     tile.className = "tile";
 
     const a = document.createElement("a");
-    // If it's a video, we want the click to play the video, not strict navigation
-    // But initially, let's keep the link wrapper. We'll handle video clicks specifically.
     a.href = link || DEFAULT_INSTAGRAM;
     a.target = "_blank";
     a.rel = "noopener";
@@ -107,47 +99,44 @@ function createTile({ mediaUrl, alt, link }) {
     // Smart Detection Logic
     img.onload = () => {
         if (isImageDark(img)) {
-            // It's a black thumbnail (likely Video) -> Swap to Native Video
-            console.log("Dark thumbnail detected (likely video), swapping to video tag:", mediaUrl);
+            // It's a black thumbnail (Video)
+            console.log("Dark thumbnail detected, setting up Click-to-Play:", mediaUrl);
 
-            const video = document.createElement("video");
-            video.className = "media";
-            video.src = driveToStream(mediaUrl);
-            video.playsInline = true;
-            video.loop = true;
-            video.muted = false; // User can unmute or we start unmuted? Instagram starts muted. 
-            // Let's start unmuted as it requires interaction to play anyway.
+            // 1. Create Play Button Overlay
+            const playBtn = document.createElement("div");
+            playBtn.className = "play-button";
+            // Simple SVG Play Icon
+            playBtn.innerHTML = `<svg viewBox="0 0 24 24" width="64" height="64" fill="white" style="filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.5));"><path d="M8 5v14l11-7z"/></svg>`;
 
-            // Fix "Black Box" by seeking to 1s
-            video.currentTime = 1;
-
-            // Fix "Rendered Youtube Video" look by using native video without default controls
-            // visual: object-fit: cover (from .media class) handles the "Zoom/Fill" issue
-
-            // Handle Interaction
-            video.onclick = (e) => {
+            // 2. Wrap the image/button interaction
+            // We intercept the click on the container to load the iframe
+            tile.onclick = (e) => {
                 e.preventDefault(); // Prevent link navigation
                 e.stopPropagation();
-                if (video.paused) {
-                    video.play();
-                } else {
-                    video.pause();
-                }
+
+                // Swap to Iframe
+                const iframe = document.createElement("iframe");
+                iframe.className = "media";
+                iframe.title = alt || "Naisho Room media";
+                // Try to autoplay if possible (Drive preview might ignore this, but worth trying)
+                iframe.src = driveToPreview(mediaUrl);
+                iframe.style.border = "0";
+                iframe.setAttribute("scrolling", "no");
+
+                // Replace content
+                a.innerHTML = ""; // Clear image
+                playBtn.remove(); // Remove button
+                // We append iframe to tile directly or to 'a'? 
+                // If we append to 'a', clicking iframe naturally consumes clicks
+                a.appendChild(iframe);
+
+                // Remove the click handler so subsequent clicks interact with iframe
+                tile.onclick = null;
             };
 
-            // Attempt to load metadata to ensure currentTime works
-            video.preload = "metadata";
-            video.onloadeddata = () => {
-                if (video.currentTime === 0) video.currentTime = 1;
-            };
-
-            // Fallback: If video fails to load (quota/error), revert to iframe? 
-            // For now, let's stick to video. If it fails, it might show poster/nothing.
-            // We can set specific poster if we had one.
-
-            img.replaceWith(video);
+            tile.appendChild(playBtn);
+            // Image stays as the "Poster"
         }
-        // Else: It's a colorful photo -> Keep img
     };
 
     a.appendChild(img);
