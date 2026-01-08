@@ -41,7 +41,7 @@ function driveToPreview(url) {
     // Returns a URL suitable for an Iframe Preview
     // Used as fallback when the lh3 thumbnail is black (video)
     const id = getDriveId(url);
-    if (id) return `https://drive.google.com/file/d/${id}/preview`;
+    if (id) return `https://drive.google.com/file/d/${id}/preview?t=5s`;
     return url;
 }
 
@@ -110,7 +110,7 @@ function createTile({ mediaUrl, alt, link }) {
             iframe.setAttribute("scrolling", "no");
 
             // Allow clicks to pass through to the <a> tag
-            iframe.style.pointerEvents = "none";
+            // iframe.style.pointerEvents = "none";
 
             img.replaceWith(iframe);
         }
