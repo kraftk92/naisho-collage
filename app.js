@@ -29,14 +29,15 @@ function getDriveId(url) {
 }
 
 function driveToVisual(url) {
-    // Returns a URL suitable for an <img> tag (high-res thumbnail)
+    // Returns a URL suitable for an Iframe Preview
+    // This is the only robust way to get a non-black thumbnail for video files
     const id = getDriveId(url);
-    if (id) return `https://lh3.googleusercontent.com/d/${id}=w1000`;
+    if (id) return `https://drive.google.com/file/d/${id}/preview`;
     return url;
 }
 
 function driveToStream(url) {
-    // Returns a URL suitable for a <video> tag (direct file stream)
+    // Deprecated/Unused but keeping helper just in case
     const id = getDriveId(url);
     if (id) return `https://drive.google.com/uc?export=download&id=${id}`;
     return url;
@@ -56,21 +57,23 @@ function createTile({ mediaUrl, alt, link }) {
     a.target = "_blank";
     a.rel = "noopener";
 
-    // 1. Setup the Image (Visual/Poster)
-    const img = document.createElement("img");
-    img.className = "media";
-    img.alt = alt || "Naisho Room photo";
-    img.loading = "lazy";
-    img.decoding = "async";
-    // Important: no-referrer prevents Google from blocking the image request
-    img.setAttribute("referrerpolicy", "no-referrer");
-    img.src = driveToVisual(mediaUrl);
+    // Use Iframe for the visual. 
+    // This loads the Google Drive Preview player which shows the correct "Poster Frame".
+    const iframe = document.createElement("iframe");
+    iframe.className = "media";
+    iframe.title = alt || "Naisho Room media";
+    iframe.loading = "lazy";
+    iframe.src = driveToVisual(mediaUrl);
 
-    // 2. Setup the Video: DISABLED due to Google Drive 403 "Hotlink Protection"
-    // Direct streaming via <video> tag is blocked by Google.
-    // We rely on the high-res `lh3` thumbnail (created above) which works for both images and videos.
+    // Style cleanup
+    iframe.style.border = "0";
+    iframe.setAttribute("scrolling", "no");
 
-    a.appendChild(img);
+    // CRITICAL: pointer-events: none allows clicks to pass through the iframe
+    // so the user actually clicks the <a> tag (Instagram link) instead of playing the video.
+    iframe.style.pointerEvents = "none";
+
+    a.appendChild(iframe);
     tile.appendChild(a);
     return tile;
 }
