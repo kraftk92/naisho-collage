@@ -38,7 +38,8 @@ function driveToVisual(url) {
 function driveToStream(url) {
     // Returns a URL suitable for a <video> tag (direct file stream)
     const id = getDriveId(url);
-    if (id) return `https://drive.google.com/uc?export=download&id=${id}`;
+    // 'view' sometimes handles streaming permissions better than 'download'
+    if (id) return `https://drive.google.com/uc?export=view&id=${id}`;
     return url;
 }
 
@@ -57,8 +58,6 @@ function createTile({ mediaUrl, alt, link }) {
     a.rel = "noopener";
 
     // 1. Setup the Image (Visual/Poster)
-    // For video files on Drive, this 'visual' link generates a thumbnail.
-    // For image files, it generates the image itself.
     const img = document.createElement("img");
     img.className = "media";
     img.alt = alt || "Naisho Room photo";
@@ -67,8 +66,6 @@ function createTile({ mediaUrl, alt, link }) {
     img.src = driveToVisual(mediaUrl);
 
     // 2. Setup the Video (Stream)
-    // We only need to try this if we suspect it might be a video, 
-    // but since we don't know the type, we create it hidden.
     const video = document.createElement("video");
     video.className = "media";
     video.muted = true;
@@ -82,21 +79,24 @@ function createTile({ mediaUrl, alt, link }) {
     source.src = driveToStream(mediaUrl);
     video.appendChild(source);
 
-    // LOGIC: 
-    // - Show Image immediately (it loads fast/lazily).
-    // - Attempt to load Video in background.
-    // - If Video loads data -> Hide Image, Show Video.
-    // - If Video fails -> Do nothing (Image stays).
+    // LOGIC:
+    // Only show the video if we are absolutely sure it is playing.
+    // 'timeupdate' fires when the current playback position has changed.
+    // This avoids "black squares" where the video loads metadata but fails to render frames.
 
-    video.onloadeddata = () => {
-        // Video is ready and verified to be playable
-        img.style.display = "none";
-        video.style.display = "block";
+    let videoIsPlaying = false;
+
+    video.ontimeupdate = () => {
+        if (!videoIsPlaying && video.currentTime > 0) {
+            videoIsPlaying = true;
+            img.style.display = "none";
+            video.style.display = "block";
+        }
     };
 
     video.onerror = () => {
-        // Not a video, or failed to load. 
-        // We clean it up to save memory/DOM weight.
+        // Not a video, or failed to load.
+        // We clean it up to save memory.
         video.remove();
     };
 
