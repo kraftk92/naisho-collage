@@ -29,23 +29,49 @@ function getDriveId(url) {
 }
 
 function driveToVisual(url) {
-    // Returns a URL suitable for an Iframe Preview
-    // This is the only robust way to get a non-black thumbnail for video files
+    // Returns a URL suitable for an <img> tag (high-res thumbnail)
+    // We use the lh3 endpoint because it allows CORS (needed for brightness check)
+    // and returns high-quality images.
     const id = getDriveId(url);
-    if (id) return `https://drive.google.com/file/d/${id}/preview`;
+    if (id) return `https://lh3.googleusercontent.com/d/${id}=w1000`;
     return url;
 }
 
-function driveToStream(url) {
-    // Deprecated/Unused but keeping helper just in case
+function driveToPreview(url) {
+    // Returns a URL suitable for an Iframe Preview
+    // Used as fallback when the lh3 thumbnail is black (video)
     const id = getDriveId(url);
-    if (id) return `https://drive.google.com/uc?export=download&id=${id}`;
+    if (id) return `https://drive.google.com/file/d/${id}/preview`;
     return url;
 }
 
 function postHeight() {
     const height = document.documentElement.scrollHeight;
     window.parent?.postMessage({ type: "naisho-collage-height", height }, "*");
+}
+
+function isImageDark(img) {
+    try {
+        const canvas = document.createElement("canvas");
+        canvas.width = 1;
+        canvas.height = 1;
+        const ctx = canvas.getContext("2d");
+        // Draw the image onto the 1x1 canvas
+        ctx.drawImage(img, 0, 0, 1, 1);
+        const data = ctx.getImageData(0, 0, 1, 1).data;
+
+        // Calculate brightness (average of R, G, B)
+        // Data structure: [r, g, b, alpha]
+        const brightness = (data[0] + data[1] + data[2]) / 3;
+
+        // Threshold: If brightness is very low (< 30/255), consider it black/dark.
+        return brightness < 30;
+    } catch (e) {
+        // If analysis fails (e.g. CORS issue), assume it is NOT dark to be safe.
+        // We prefer showing an image than an iframe if unsure.
+        console.warn("Unable to analyze image brightness", e);
+        return false;
+    }
 }
 
 function createTile({ mediaUrl, alt, link }) {
@@ -57,23 +83,41 @@ function createTile({ mediaUrl, alt, link }) {
     a.target = "_blank";
     a.rel = "noopener";
 
-    // Use Iframe for the visual. 
-    // This loads the Google Drive Preview player which shows the correct "Poster Frame".
-    const iframe = document.createElement("iframe");
-    iframe.className = "media";
-    iframe.title = alt || "Naisho Room media";
-    iframe.loading = "lazy";
-    iframe.src = driveToVisual(mediaUrl);
+    // Start with the Image (Visual)
+    const img = document.createElement("img");
+    img.className = "media";
+    img.alt = alt || "Naisho Room photo";
+    img.loading = "lazy";
+    img.decoding = "async";
+    img.setAttribute("referrerpolicy", "no-referrer");
 
-    // Style cleanup
-    iframe.style.border = "0";
-    iframe.setAttribute("scrolling", "no");
+    // Enable CORS so we can read the pixels in 'isImageDark'
+    img.crossOrigin = "Anonymous";
 
-    // CRITICAL: pointer-events: none allows clicks to pass through the iframe
-    // so the user actually clicks the <a> tag (Instagram link) instead of playing the video.
-    iframe.style.pointerEvents = "none";
+    img.src = driveToVisual(mediaUrl);
 
-    a.appendChild(iframe);
+    // Smart Detection Logic
+    img.onload = () => {
+        if (isImageDark(img)) {
+            // It's a black thumbnail (Video) -> Swap to Iframe
+            console.log("Dark thumbnail detected (likely video), swapping to iframe:", mediaUrl);
+
+            const iframe = document.createElement("iframe");
+            iframe.className = "media";
+            iframe.title = alt || "Naisho Room media";
+            iframe.src = driveToPreview(mediaUrl);
+            iframe.style.border = "0";
+            iframe.setAttribute("scrolling", "no");
+
+            // Allow clicks to pass through to the <a> tag
+            iframe.style.pointerEvents = "none";
+
+            img.replaceWith(iframe);
+        }
+        // Else: It's a colorful photo -> Keep img (it looks better)
+    };
+
+    a.appendChild(img);
     tile.appendChild(a);
     return tile;
 }
