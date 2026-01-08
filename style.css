@@ -64,13 +64,14 @@ body {
 
 
 /* Boost brightness for dark thumbnails to make them visible */
+/* Added blur(0.5px) to smooth out JPEG compression artifacts from brightness boost */
 .dark-thumb {
-    filter: brightness(4.5) contrast(1.1) saturate(0.9);
+    filter: brightness(3.5) contrast(1.1) saturate(0.9) blur(0.5px);
     transition: filter 0.3s ease;
 }
 
 .tile:hover .dark-thumb {
-    filter: brightness(3) contrast(1.2);
+    filter: brightness(4) contrast(1.2) blur(0.5px);
 }
 
 .play-button {
@@ -106,9 +107,9 @@ body {
 }
 
 .tile:hover .play-icon-bg {
-    background: rgba(200, 30, 30, 0.9);
-    /* Naisho Red accent on hover */
-    border-color: rgba(255, 255, 255, 0.6);
+    background: rgba(188, 140, 78, 0.9);
+    /* #bc8c4e (Gold/Bronze) */
+    border-color: rgba(255, 255, 255, 0.8);
 }
 
 iframe.media {
