@@ -15,13 +15,23 @@ function driveToDirect(url) {
     const u = String(url).trim();
     if (!u) return "";
 
-    if (u.includes("drive.google.com/uc?")) return u;
+    // If it's already a direct google content link, return it
+    if (u.includes("googleusercontent.com")) return u;
 
+    let id = null;
+
+    // Match /file/d/ID patterns
     const fileMatch = u.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-    if (fileMatch) return `https://drive.google.com/uc?export=download&id=${fileMatch[1]}`;
+    if (fileMatch) {
+        id = fileMatch[1];
+    } else {
+        // Match ?id=ID patterns
+        const idMatch = u.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        if (idMatch) id = idMatch[1];
+    }
 
-    const idMatch = u.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-    if (idMatch) return `https://drive.google.com/uc?export=download&id=${idMatch[1]}`;
+    // Return the high-res image format if we found an ID
+    if (id) return `https://lh3.googleusercontent.com/d/${id}=w1000`;
 
     return u;
 }
