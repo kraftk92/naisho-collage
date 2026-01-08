@@ -45,6 +45,12 @@ function driveToPreview(url) {
     return url;
 }
 
+function driveToStream(url) {
+    const id = getDriveId(url);
+    if (id) return `https://drive.google.com/uc?export=download&id=${id}`;
+    return url;
+}
+
 function postHeight() {
     const height = document.documentElement.scrollHeight;
     window.parent?.postMessage({ type: "naisho-collage-height", height }, "*");
@@ -79,6 +85,8 @@ function createTile({ mediaUrl, alt, link }) {
     tile.className = "tile";
 
     const a = document.createElement("a");
+    // If it's a video, we want the click to play the video, not strict navigation
+    // But initially, let's keep the link wrapper. We'll handle video clicks specifically.
     a.href = link || DEFAULT_INSTAGRAM;
     a.target = "_blank";
     a.rel = "noopener";
@@ -99,22 +107,47 @@ function createTile({ mediaUrl, alt, link }) {
     // Smart Detection Logic
     img.onload = () => {
         if (isImageDark(img)) {
-            // It's a black thumbnail (Video) -> Swap to Iframe
-            console.log("Dark thumbnail detected (likely video), swapping to iframe:", mediaUrl);
+            // It's a black thumbnail (likely Video) -> Swap to Native Video
+            console.log("Dark thumbnail detected (likely video), swapping to video tag:", mediaUrl);
 
-            const iframe = document.createElement("iframe");
-            iframe.className = "media";
-            iframe.title = alt || "Naisho Room media";
-            iframe.src = driveToPreview(mediaUrl);
-            iframe.style.border = "0";
-            iframe.setAttribute("scrolling", "no");
+            const video = document.createElement("video");
+            video.className = "media";
+            video.src = driveToStream(mediaUrl);
+            video.playsInline = true;
+            video.loop = true;
+            video.muted = false; // User can unmute or we start unmuted? Instagram starts muted. 
+            // Let's start unmuted as it requires interaction to play anyway.
 
-            // Allow clicks to pass through to the <a> tag
-            // iframe.style.pointerEvents = "none";
+            // Fix "Black Box" by seeking to 1s
+            video.currentTime = 1;
 
-            img.replaceWith(iframe);
+            // Fix "Rendered Youtube Video" look by using native video without default controls
+            // visual: object-fit: cover (from .media class) handles the "Zoom/Fill" issue
+
+            // Handle Interaction
+            video.onclick = (e) => {
+                e.preventDefault(); // Prevent link navigation
+                e.stopPropagation();
+                if (video.paused) {
+                    video.play();
+                } else {
+                    video.pause();
+                }
+            };
+
+            // Attempt to load metadata to ensure currentTime works
+            video.preload = "metadata";
+            video.onloadeddata = () => {
+                if (video.currentTime === 0) video.currentTime = 1;
+            };
+
+            // Fallback: If video fails to load (quota/error), revert to iframe? 
+            // For now, let's stick to video. If it fails, it might show poster/nothing.
+            // We can set specific poster if we had one.
+
+            img.replaceWith(video);
         }
-        // Else: It's a colorful photo -> Keep img (it looks better)
+        // Else: It's a colorful photo -> Keep img
     };
 
     a.appendChild(img);

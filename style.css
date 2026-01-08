@@ -62,6 +62,10 @@ body {
     transform: scale(1.04);
 }
 
+video.media {
+    cursor: pointer;
+}
+
 iframe.media {
     width: 177.78%;
     height: 100%;
