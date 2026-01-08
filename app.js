@@ -79,7 +79,7 @@ function createTile({ mediaUrl, alt, link }) {
     // CRITICAL FIX: Google Drive blocks "hotlinking" if it sees an external referrer.
     // Setting "no-referrer" makes the request look like a direct entry (which is allowed).
     video.setAttribute("referrerpolicy", "no-referrer");
-    video.crossOrigin = "anonymous";
+    // video.crossOrigin = "anonymous"; // REMOVED: Triggers CORS error because Drive doesn't send CORS headers.
 
     const source = document.createElement("source");
     source.src = driveToStream(mediaUrl);
