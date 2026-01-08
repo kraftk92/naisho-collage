@@ -30,8 +30,9 @@ function getDriveId(url) {
 
 function driveToVisual(url) {
     // Returns a URL suitable for an <img> tag (high-res thumbnail)
+    // Using the 'thumbnail' endpoint handles redirects better for mixed media types
     const id = getDriveId(url);
-    if (id) return `https://lh3.googleusercontent.com/d/${id}=w1000`;
+    if (id) return `https://drive.google.com/thumbnail?id=${id}&sz=w1000`;
     return url;
 }
 
@@ -75,6 +76,11 @@ function createTile({ mediaUrl, alt, link }) {
     video.preload = "metadata";
     video.style.display = "none"; // Hidden by default
 
+    // CRITICAL FIX: Google Drive blocks "hotlinking" if it sees an external referrer.
+    // Setting "no-referrer" makes the request look like a direct entry (which is allowed).
+    video.setAttribute("referrerpolicy", "no-referrer");
+    video.crossOrigin = "anonymous";
+
     const source = document.createElement("source");
     source.src = driveToStream(mediaUrl);
     video.appendChild(source);
@@ -96,8 +102,8 @@ function createTile({ mediaUrl, alt, link }) {
 
     video.onerror = () => {
         // Not a video, or failed to load.
-        // We clean it up to save memory.
-        video.remove();
+        // We do NOT remove the element to avoid DOM thrashing (flicker).
+        // Since display is already 'none', it stays hidden.
     };
 
     a.appendChild(img);
