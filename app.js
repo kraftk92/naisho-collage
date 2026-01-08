@@ -9,31 +9,37 @@ const grid = document.getElementById("grid");
 
 /* ---------- helpers ---------- */
 
-function driveToDirect(url) {
-    if (!url) return "";
-
+function getDriveId(url) {
+    if (!url) return null;
     const u = String(url).trim();
-    if (!u) return "";
+    if (!u) return null;
 
-    // If it's already a direct google content link, return it
-    if (u.includes("googleusercontent.com")) return u;
-
-    let id = null;
+    // Routine to process "already direct" links or raw IDs could go here, 
+    // but for now we focus on extracting IDs from Drive links.
 
     // Match /file/d/ID patterns
     const fileMatch = u.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-    if (fileMatch) {
-        id = fileMatch[1];
-    } else {
-        // Match ?id=ID patterns
-        const idMatch = u.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-        if (idMatch) id = idMatch[1];
-    }
+    if (fileMatch) return fileMatch[1];
 
-    // Return the high-res image format if we found an ID
+    // Match ?id=ID patterns
+    const idMatch = u.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if (idMatch) return idMatch[1];
+
+    return null;
+}
+
+function driveToVisual(url) {
+    // Returns a URL suitable for an <img> tag (high-res thumbnail)
+    const id = getDriveId(url);
     if (id) return `https://lh3.googleusercontent.com/d/${id}=w1000`;
+    return url;
+}
 
-    return u;
+function driveToStream(url) {
+    // Returns a URL suitable for a <video> tag (direct file stream)
+    const id = getDriveId(url);
+    if (id) return `https://drive.google.com/uc?export=download&id=${id}`;
+    return url;
 }
 
 function postHeight() {
@@ -50,13 +56,19 @@ function createTile({ mediaUrl, alt, link }) {
     a.target = "_blank";
     a.rel = "noopener";
 
+    // 1. Setup the Image (Visual/Poster)
+    // For video files on Drive, this 'visual' link generates a thumbnail.
+    // For image files, it generates the image itself.
     const img = document.createElement("img");
     img.className = "media";
     img.alt = alt || "Naisho Room photo";
     img.loading = "lazy";
     img.decoding = "async";
-    img.src = mediaUrl;
+    img.src = driveToVisual(mediaUrl);
 
+    // 2. Setup the Video (Stream)
+    // We only need to try this if we suspect it might be a video, 
+    // but since we don't know the type, we create it hidden.
     const video = document.createElement("video");
     video.className = "media";
     video.muted = true;
@@ -64,33 +76,28 @@ function createTile({ mediaUrl, alt, link }) {
     video.loop = true;
     video.playsInline = true;
     video.preload = "metadata";
-    video.style.display = "none";
+    video.style.display = "none"; // Hidden by default
 
     const source = document.createElement("source");
-    source.src = mediaUrl;
+    source.src = driveToStream(mediaUrl);
     video.appendChild(source);
 
-    let settled = false;
+    // LOGIC: 
+    // - Show Image immediately (it loads fast/lazily).
+    // - Attempt to load Video in background.
+    // - If Video loads data -> Hide Image, Show Video.
+    // - If Video fails -> Do nothing (Image stays).
 
-    img.onload = () => {
-        if (settled) return;
-        settled = true;
-        video.remove();
-    };
-
-    img.onerror = () => {
-        // If image fails, try video.
+    video.onloadeddata = () => {
+        // Video is ready and verified to be playable
+        img.style.display = "none";
         video.style.display = "block";
     };
 
-    video.onloadeddata = () => {
-        if (settled) return;
-        settled = true;
-        img.remove();
-    };
-
     video.onerror = () => {
-        // If video fails too, keep the tile blank. Silent fail.
+        // Not a video, or failed to load. 
+        // We clean it up to save memory/DOM weight.
+        video.remove();
     };
 
     a.appendChild(img);
@@ -148,7 +155,7 @@ window.naishoCollageCallback = function (response) {
         if (!imageUrl) return;
 
         const tile = createTile({
-            mediaUrl: driveToDirect(imageUrl),
+            mediaUrl: imageUrl, // Pass raw URL; createTile handles the split logic
             alt: note,
             link: instagramKey ? row[instagramKey] : DEFAULT_INSTAGRAM,
         });
