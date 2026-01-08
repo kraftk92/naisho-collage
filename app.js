@@ -66,48 +66,11 @@ function createTile({ mediaUrl, alt, link }) {
     img.setAttribute("referrerpolicy", "no-referrer");
     img.src = driveToVisual(mediaUrl);
 
-    // 2. Setup the Video (Stream)
-    const video = document.createElement("video");
-    video.className = "media";
-    video.muted = true;
-    video.autoplay = true;
-    video.loop = true;
-    video.playsInline = true;
-    video.preload = "metadata";
-    video.style.display = "none"; // Hidden by default
-
-    // CRITICAL FIX: Google Drive blocks "hotlinking" if it sees an external referrer.
-    // Setting "no-referrer" makes the request look like a direct entry (which is allowed).
-    video.setAttribute("referrerpolicy", "no-referrer");
-    // video.crossOrigin = "anonymous"; // REMOVED: Triggers CORS error because Drive doesn't send CORS headers.
-
-    const source = document.createElement("source");
-    source.src = driveToStream(mediaUrl);
-    video.appendChild(source);
-
-    // LOGIC:
-    // Only show the video if we are absolutely sure it is playing.
-    // 'timeupdate' fires when the current playback position has changed.
-    // This avoids "black squares" where the video loads metadata but fails to render frames.
-
-    let videoIsPlaying = false;
-
-    video.ontimeupdate = () => {
-        if (!videoIsPlaying && video.currentTime > 0) {
-            videoIsPlaying = true;
-            img.style.display = "none";
-            video.style.display = "block";
-        }
-    };
-
-    video.onerror = () => {
-        // Not a video, or failed to load.
-        // We do NOT remove the element to avoid DOM thrashing (flicker).
-        // Since display is already 'none', it stays hidden.
-    };
+    // 2. Setup the Video: DISABLED due to Google Drive 403 "Hotlink Protection"
+    // Direct streaming via <video> tag is blocked by Google.
+    // We rely on the high-res `lh3` thumbnail (created above) which works for both images and videos.
 
     a.appendChild(img);
-    a.appendChild(video);
     tile.appendChild(a);
     return tile;
 }
