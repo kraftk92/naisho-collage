@@ -41,8 +41,7 @@ function driveToPreview(url) {
     // Returns a URL suitable for an Iframe Preview
     // Used as fallback when the lh3 thumbnail is black (video)
     const id = getDriveId(url);
-    // Attempt autoplay=1 to reduce clicks. t=1s starts slightly in.
-    if (id) return `https://drive.google.com/file/d/${id}/preview?autoplay=1`;
+    if (id) return `https://drive.google.com/file/d/${id}/preview`;
     return url;
 }
 

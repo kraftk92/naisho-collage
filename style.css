@@ -65,12 +65,12 @@ body {
 
 /* Boost brightness for dark thumbnails to make them visible */
 .dark-thumb {
-    filter: brightness(5) contrast(1.2) saturate(0.8);
+    filter: brightness(2.5) contrast(1.1) saturate(0.8);
     transition: filter 0.3s ease;
 }
 
 .tile:hover .dark-thumb {
-    filter: brightness(6) contrast(1.3);
+    filter: brightness(3) contrast(1.2);
 }
 
 .play-button {
