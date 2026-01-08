@@ -100,7 +100,7 @@ function createTile({ mediaUrl, alt, link }) {
     img.onload = () => {
         if (isImageDark(img)) {
             // It's a black thumbnail (Video)
-            console.log("Dark thumbnail detected, setting up Click-to-Play:", mediaUrl);
+            console.log("Dark thumbnail detected, styling as video link:", mediaUrl);
 
             // Boost visibility of the dark frame
             img.classList.add("dark-thumb");
@@ -115,32 +115,10 @@ function createTile({ mediaUrl, alt, link }) {
                 </div>
             `;
 
-            // 2. Wrap the image/button interaction
-            // We intercept the click on the container to load the iframe
-            tile.onclick = (e) => {
-                e.preventDefault(); // Prevent link navigation
-                e.stopPropagation();
-
-                // Swap to Iframe
-                const iframe = document.createElement("iframe");
-                iframe.className = "media";
-                iframe.title = alt || "Naisho Room media";
-                iframe.src = driveToPreview(mediaUrl);
-                iframe.style.border = "0"; // Reset border just in case
-                iframe.setAttribute("scrolling", "no");
-                iframe.allow = "autoplay; fullscreen"; // Add full allow permissions
-
-                // Replace content
-                a.innerHTML = ""; // Clear image
-                playBtn.remove(); // Remove button
-                a.appendChild(iframe);
-
-                // Remove the click handler so subsequent clicks interact with iframe
-                tile.onclick = null;
-            };
-
+            // 2. Append visually, but NO specific click handler. 
+            // The Play Button has pointer-events: none, so clicks pass through to the <a> tag.
+            // This will open the Instagram link in a new tab, just like images.
             tile.appendChild(playBtn);
-            // Image stays as the "Poster"
         }
     };
 
