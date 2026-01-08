@@ -30,17 +30,15 @@ function getDriveId(url) {
 
 function driveToVisual(url) {
     // Returns a URL suitable for an <img> tag (high-res thumbnail)
-    // Using the 'thumbnail' endpoint handles redirects better for mixed media types
     const id = getDriveId(url);
-    if (id) return `https://drive.google.com/thumbnail?id=${id}&sz=w1000`;
+    if (id) return `https://lh3.googleusercontent.com/d/${id}=w1000`;
     return url;
 }
 
 function driveToStream(url) {
     // Returns a URL suitable for a <video> tag (direct file stream)
     const id = getDriveId(url);
-    // 'view' sometimes handles streaming permissions better than 'download'
-    if (id) return `https://drive.google.com/uc?export=view&id=${id}`;
+    if (id) return `https://drive.google.com/uc?export=download&id=${id}`;
     return url;
 }
 
@@ -64,6 +62,8 @@ function createTile({ mediaUrl, alt, link }) {
     img.alt = alt || "Naisho Room photo";
     img.loading = "lazy";
     img.decoding = "async";
+    // Important: no-referrer prevents Google from blocking the image request
+    img.setAttribute("referrerpolicy", "no-referrer");
     img.src = driveToVisual(mediaUrl);
 
     // 2. Setup the Video (Stream)
