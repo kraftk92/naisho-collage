@@ -65,7 +65,7 @@ body {
 
 /* Boost brightness for dark thumbnails to make them visible */
 .dark-thumb {
-    filter: brightness(2.5) contrast(1.1) saturate(0.8);
+    filter: brightness(4.5) contrast(1.1) saturate(0.9);
     transition: filter 0.3s ease;
 }
 
