@@ -1,7 +1,7 @@
 console.log("naisho collage loaded");
 
 const SHEET_GVIZ_URL =
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vSh0r-rvE9vpx5H5bsD3wBf_qXWUBwfamSIg0KB_YUwB9UnELDLhXqA5ipHfgAFOvJ8DmUwMY2oFy2z/gviz/tq?gid=0&tqx=out:json;responseHandler=naishoCollageCallback";
+    "https://docs.google.com/spreadsheets/d/1vf4w7PEqwr2Q0SB94fAMx8v-G89HcFnJCD9wOrOE4s4/gviz/tq?gid=0&tqx=out:json;responseHandler=naishoCollageCallback";
 
 const DEFAULT_INSTAGRAM = "https://www.instagram.com/naishoroom/?hl=en";
 
@@ -113,4 +113,42 @@ function gvizToObjects(gvizResponse) {
 }
 
 /* ---------- callback used by JSONP ---------- */
-window.naishoCollageCallback = func
+window.naishoCollageCallback = function (response) {
+    const data = gvizToObjects(response);
+
+    // Clear existing grid content just in case
+    grid.innerHTML = "";
+
+    if (!data || data.length === 0) {
+        console.warn("No data found in response.");
+        return;
+    }
+
+    data.forEach((row) => {
+        // Mapping based on user provided column names:
+        // image_url -> The image source
+        // instagram_link_url -> The click-through link (handling potential extra text in header)
+        // alt_text -> Alt text
+
+        const instagramKey = Object.keys(row).find(k => k.toLowerCase().includes("instagram_link_url"));
+        const imageUrl = row.image_url;
+        const note = row.alt_text;
+
+        // Basic validation
+        if (!imageUrl) return;
+
+        const tile = createTile({
+            mediaUrl: driveToDirect(imageUrl),
+            alt: note,
+            link: instagramKey ? row[instagramKey] : DEFAULT_INSTAGRAM,
+        });
+        grid.appendChild(tile);
+    });
+
+    postHeight();
+};
+
+// Initiate the JSONP request
+const script = document.createElement("script");
+script.src = SHEET_GVIZ_URL;
+document.body.appendChild(script);
