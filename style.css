@@ -23,12 +23,22 @@ body {
 
 .grid {
     width: 100%;
+    /* Limit the width so 3 columns don't get massive on desktop */
+    max-width: 860px;
+    margin: 0 auto;
+
     display: grid;
     gap: 12px;
 
-    /* Responsive, fluid grid */
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    /* Max 3 columns */
+    grid-template-columns: repeat(3, 1fr);
     place-content: center;
+}
+
+@media (max-width: 600px) {
+    .grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 .tile {
