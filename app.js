@@ -1,3 +1,5 @@
+console.log("naisho collage loaded");
+
 const CSV_URL =
     "https://docs.google.com/spreadsheets/d/e/2PACX-1vSh0r-rvE9vpx5H5bsD3wBf_qXWUBwfamSIg0KB_YUwB9UnELDLhXqA5ipHfgAFOvJ8DmUwMY2oFy2z/pub?gid=0&single=true&output=csv";
 
