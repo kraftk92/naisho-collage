@@ -148,6 +148,12 @@ window.naishoCollageCallback = function (response) {
     postHeight();
 };
 
+// Shim to handle the default callback from Google Sheets API
+window.google = window.google || {};
+window.google.visualization = window.google.visualization || {};
+window.google.visualization.Query = window.google.visualization.Query || {};
+window.google.visualization.Query.setResponse = window.naishoCollageCallback;
+
 // Initiate the JSONP request
 const script = document.createElement("script");
 script.src = SHEET_GVIZ_URL;
