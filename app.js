@@ -41,7 +41,8 @@ function driveToPreview(url) {
     // Returns a URL suitable for an Iframe Preview
     // Used as fallback when the lh3 thumbnail is black (video)
     const id = getDriveId(url);
-    if (id) return `https://drive.google.com/file/d/${id}/preview?t=5s`;
+    // Attempt autoplay=1 to reduce clicks. t=1s starts slightly in.
+    if (id) return `https://drive.google.com/file/d/${id}/preview?autoplay=1`;
     return url;
 }
 
@@ -102,11 +103,18 @@ function createTile({ mediaUrl, alt, link }) {
             // It's a black thumbnail (Video)
             console.log("Dark thumbnail detected, setting up Click-to-Play:", mediaUrl);
 
+            // Boost visibility of the dark frame
+            img.classList.add("dark-thumb");
+
             // 1. Create Play Button Overlay
             const playBtn = document.createElement("div");
             playBtn.className = "play-button";
-            // Simple SVG Play Icon
-            playBtn.innerHTML = `<svg viewBox="0 0 24 24" width="64" height="64" fill="white" style="filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.5));"><path d="M8 5v14l11-7z"/></svg>`;
+            // More prominent Play Icon
+            playBtn.innerHTML = `
+                <div class="play-icon-bg">
+                    <svg viewBox="0 0 24 24" width="32" height="32" fill="white" style="margin-left: 4px;"><path d="M8 5v14l11-7z"/></svg>
+                </div>
+            `;
 
             // 2. Wrap the image/button interaction
             // We intercept the click on the container to load the iframe
@@ -118,16 +126,14 @@ function createTile({ mediaUrl, alt, link }) {
                 const iframe = document.createElement("iframe");
                 iframe.className = "media";
                 iframe.title = alt || "Naisho Room media";
-                // Try to autoplay if possible (Drive preview might ignore this, but worth trying)
                 iframe.src = driveToPreview(mediaUrl);
-                iframe.style.border = "0";
+                iframe.style.border = "0"; // Reset border just in case
                 iframe.setAttribute("scrolling", "no");
+                iframe.allow = "autoplay; fullscreen"; // Add full allow permissions
 
                 // Replace content
                 a.innerHTML = ""; // Clear image
                 playBtn.remove(); // Remove button
-                // We append iframe to tile directly or to 'a'? 
-                // If we append to 'a', clicking iframe naturally consumes clicks
                 a.appendChild(iframe);
 
                 // Remove the click handler so subsequent clicks interact with iframe

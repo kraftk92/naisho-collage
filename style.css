@@ -62,6 +62,17 @@ body {
     transform: scale(1.04);
 }
 
+
+/* Boost brightness for dark thumbnails to make them visible */
+.dark-thumb {
+    filter: brightness(5) contrast(1.2) saturate(0.8);
+    transition: filter 0.3s ease;
+}
+
+.tile:hover .dark-thumb {
+    filter: brightness(6) contrast(1.3);
+}
+
 .play-button {
     position: absolute;
     inset: 0;
@@ -72,10 +83,32 @@ body {
     /* Let clicks pass through to the tile listener */
     z-index: 10;
     transition: transform 180ms ease;
+    /* Optional: subtle dark overlay to enhance button? */
+    /* background: rgba(0,0,0,0.2); */
+}
+
+.play-icon-bg {
+    width: 60px;
+    height: 60px;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: background 0.2s, transform 0.2s;
 }
 
 .tile:hover .play-button {
     transform: scale(1.1);
+}
+
+.tile:hover .play-icon-bg {
+    background: rgba(200, 30, 30, 0.9);
+    /* Naisho Red accent on hover */
+    border-color: rgba(255, 255, 255, 0.6);
 }
 
 iframe.media {
