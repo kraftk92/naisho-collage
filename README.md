@@ -17,7 +17,7 @@ This web application fetches media URLs and metadata from a managed Google Sheet
 - **Reliability**: Clicking a video tile opens the content directly in Instagram (or the source link) to ensure perfect playback on all devices/browsers.
 
 ### 🎨 Design & Layout
-- **Brand Identity**: Uses Naisho's branded colors (Red/Gold) and fonts.
+- **Brand Identity**: Uses Naisho's branded colors (Gold) and fonts.
 - **Clean Grid**: 
   - Desktop: Maximum **3 columns** centered layout for a premium look.
   - Mobile: Responsive 2-column layout.
