@@ -6,6 +6,8 @@ const SHEET_GVIZ_URL =
 const DEFAULT_INSTAGRAM = "https://www.instagram.com/naishoroom/?hl=en";
 
 const grid = document.getElementById("grid");
+const wrap = document.querySelector(".wrap");
+let lastPostedHeight = 0;
 
 /* ---------- helpers ---------- */
 
@@ -46,9 +48,22 @@ function driveToPreview(url) {
 }
 
 function postHeight() {
-    const height = document.documentElement.scrollHeight;
+    const height = Math.ceil(
+        wrap?.getBoundingClientRect().bottom ?? document.documentElement.scrollHeight,
+    );
+    if (height === lastPostedHeight) return;
+    lastPostedHeight = height;
     window.parent?.postMessage({ type: "naisho-collage-height", height }, "*");
 }
+
+const resizeObserver = new ResizeObserver(() => {
+    window.requestAnimationFrame(postHeight);
+});
+
+resizeObserver.observe(document.documentElement);
+resizeObserver.observe(grid);
+window.addEventListener("load", postHeight);
+window.addEventListener("resize", postHeight);
 
 function isImageDark(img) {
     try {

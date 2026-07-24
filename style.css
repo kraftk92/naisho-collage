@@ -6,10 +6,14 @@ html,
 body {
     margin: 0;
     padding: 0;
+    width: 100%;
+    min-height: 0;
+    overflow: hidden;
+    background: #04070c;
+    color-scheme: dark;
 }
 
 body {
-    background: transparent;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
         Roboto, Arial, sans-serif;
 }
@@ -47,7 +51,7 @@ body {
     aspect-ratio: 1 / 1;
     overflow: hidden;
     border-radius: 10px;
-    background: rgba(0, 0, 0, 0.05);
+    background: #07101f;
 }
 
 .tile a,
